@@ -19,7 +19,6 @@ vjoy_device = pyvjoy.VJoyDevice(1)
 # Inisialisasi detector dan controller
 hand_detector = HandDetector()
 aruco_detector = ArucoDetector()
-vjoy_controller = VJoyController(vjoy_device)
 
 # Inisialisasi shift counter dan state tangan
 shift_counter = 0  # Mulai dari 1
@@ -51,6 +50,13 @@ GAS_MIN = config["gas_min"]
 GAS_MAX = config["gas_max"]
 BRAKE_MIN = config["brake_min"]
 BRAKE_MAX = config["brake_max"]
+
+vjoy_controller = VJoyController(
+    vjoy_device,
+    sensitivity=STEERING_SENSITIVITY,
+    deadzone=STEERING_DEADZONE,
+    max_rotation=MAX_WHEEL_ROTATION
+)
 
 def display_shift_counter(counter):
     return "R" if counter == 0 else str(counter)
@@ -201,7 +207,7 @@ while cap.isOpened():
             center_y = frame.shape[0] - 50
 
             # Mapping yaw ke bar panjang
-            bar_length = int(abs(relative_yaw) * 5)  # Skala yaw ke panjang bar
+            bar_length = int(abs(relative_yaw) * 10)  # Skala yaw ke panjang bar
             bar_x_start = center_x - bar_length if relative_yaw < 0 else center_x
             bar_x_end = center_x + bar_length if relative_yaw > 0 else center_x
 

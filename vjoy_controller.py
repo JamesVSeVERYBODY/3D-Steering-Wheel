@@ -1,17 +1,13 @@
 import pyvjoy
 
 class VJoyController:
-    def __init__(self, vjoy_device):
+    def __init__(self, vjoy_device, sensitivity=1.0, deadzone=5, max_rotation=450):
         self.vjoy_device = vjoy_device
-        
-        # Batasan steering wheel mobil real (default 900° total → ±450°)
-        self.MAX_WHEEL_ROTATION = 450  # Bisa ubah ke 540, 720, atau 900 kalau mau
-        self.STEERING_SENSITIVITY = 1.0  # Bisa dikurangi kalau masih terlalu responsif
-        self.STEERING_DEADZONE = 5  # Biar yaw kecil gak bikin steering gerak (default 2°)
-        
-        # Variabel smoothing steering
-        self.previous_steering_value = 16384  # Posisi tengah di vJoy
-        self.STEERING_SMOOTHING = 0.4  # Makin tinggi makin smooth (0.1 - 0.5 ideal)
+        self.STEERING_SENSITIVITY = sensitivity
+        self.STEERING_DEADZONE = deadzone
+        self.MAX_WHEEL_ROTATION = max_rotation
+        self.STEERING_SMOOTHING = 0.1
+        self.previous_steering_value = 16384
 
     def map_yaw_to_steering(self, yaw):
         """Konversi sudut yaw ke nilai steering vJoy"""
