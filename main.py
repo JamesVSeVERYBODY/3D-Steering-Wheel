@@ -55,7 +55,8 @@ vjoy_controller = VJoyController(
     vjoy_device,
     sensitivity=STEERING_SENSITIVITY,
     deadzone=STEERING_DEADZONE,
-    max_rotation=MAX_WHEEL_ROTATION
+    max_rotation=MAX_WHEEL_ROTATION,
+    steering_steps=21
 )
 
 def display_shift_counter(counter):
@@ -136,18 +137,41 @@ while cap.isOpened():
 
             # Throttle & brake
             if hand_label == "Right":
-                throttle_value, _ = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
-                is_throttle = True
+                throttle_value_raw, _ = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
+
+                # Kalau throttle kecil (masih idle), anggap 0
+                if throttle_value_raw < 22000:  # bisa diatur sesuai feel kamu
+                    throttle_value = 0
+                    is_throttle = False
+                else:
+                    throttle_value = throttle_value_raw
+                    is_throttle = True
+
             elif hand_label == "Left":
-                _, brake_value = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
-                is_braking = True
-            
+                _, brake_value_raw = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
+
+                if brake_value_raw < 9500:  # bisa disesuaikan juga
+                    brake_value = 0
+                    is_braking = False
+                else:
+                    brake_value = brake_value_raw
+                    is_braking = True
+
             # Tampilkan nilai throttle & brake di frame
             cv2.putText(frame, f"Throttle: {throttle_value}", (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             cv2.putText(frame, f"Brake: {brake_value}", (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
             # Gambar landmark pada tangan
             hand_detector.draw_landmarks(output_frame, hand_landmarks)
+        # Kalau tangan kanan (gas) gak kedeteksi, matikan throttle
+        if not right_hand_detected:
+            throttle_value = 0
+            is_throttle = False
+
+        # Kalau tangan kiri (rem) gak kedeteksi, matikan brake
+        if not left_hand_detected:
+            brake_value = 0
+            is_braking = False
 
     # ===== BAGIAN DETEKSI ARUCO =====
     aruco_result = aruco_detector.detect_markers(aruco_frame)
