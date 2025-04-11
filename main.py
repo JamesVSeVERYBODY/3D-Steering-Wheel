@@ -114,7 +114,7 @@ while cap.isOpened():
             if hand_label == "Right":
                 right_hand_detected = True
                 if hand_detector.is_index_finger_vertical(hand_landmarks) and not right_hand_shift_detected:
-                    if shift_counter < 6 and (current_time - last_shift_time > shift_cooldown):
+                    if current_time - last_shift_time > shift_cooldown:
                         shift_counter += 1
                         right_hand_shift_detected = True
                         last_shift_time = current_time
@@ -126,7 +126,7 @@ while cap.isOpened():
             if hand_label == "Left":
                 left_hand_detected = True
                 if hand_detector.is_index_finger_vertical(hand_landmarks) and not left_hand_shift_detected:
-                    if shift_counter > 0 and (current_time - last_shift_time > shift_cooldown):
+                    if current_time - last_shift_time > shift_cooldown:
                         shift_counter -= 1
                         left_hand_shift_detected = True
                         last_shift_time = current_time
@@ -137,15 +137,19 @@ while cap.isOpened():
 
             # Throttle & brake
             if hand_label == "Right":
-                throttle_value_raw, _ = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
+                if not hand_detector.is_index_finger_vertical(hand_landmarks):  # Jangan throttle pas shift gesture
+                    throttle_value_raw, _ = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
 
                 # Kalau throttle kecil (masih idle), anggap 0
-                if throttle_value_raw < 22000:  # bisa diatur sesuai feel kamu
+                    if throttle_value_raw < 22000:  # bisa diatur sesuai feel kamu
+                        throttle_value = 0
+                        is_throttle = False
+                    else:
+                        throttle_value = throttle_value_raw
+                        is_throttle = True
+                else:
                     throttle_value = 0
                     is_throttle = False
-                else:
-                    throttle_value = throttle_value_raw
-                    is_throttle = True
 
             elif hand_label == "Left":
                 _, brake_value_raw = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
@@ -277,7 +281,7 @@ while cap.isOpened():
 
     # Kalau sudah lewat SHIFT_DISPLAY_TIME detik, balikin teks ke normal
     if time.time() - shift_display_time > SHIFT_DISPLAY_TIME:
-        current_shift_text = f"Shift: {display_shift_counter(shift_counter)}"
+        current_shift_text = "" 
 
     # Warna teks shifting
     shift_color = (0, 255, 0)  # Hijau normal
