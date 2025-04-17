@@ -1,12 +1,12 @@
 import pyvjoy
 
 class VJoyController:
-    def __init__(self, vjoy_device, sensitivity=1.0, deadzone=5, max_rotation=450, steering_steps=21):
+    def __init__(self, vjoy_device, sensitivity=2.0, deadzone=5, max_rotation=450, steering_steps=31):
         self.vjoy_device = vjoy_device
         self.STEERING_SENSITIVITY = sensitivity
         self.STEERING_DEADZONE = deadzone
         self.MAX_WHEEL_ROTATION = max_rotation
-        self.STEERING_SMOOTHING = 0.1
+        self.STEERING_SMOOTHING = 0.0 ## awwalnya 0,1 , sens = 1, sm 21
         self.previous_steering_value = 16384
         self.STEERING_STEPS = steering_steps
         
@@ -39,10 +39,12 @@ class VJoyController:
         max_range = 16384
         target_value = center_value + int(bucket / half_steps * max_range)
 
-        # SMOOTH TRANSITION
-        smoothed = int(self.previous_steering_value * (1 - self.STEERING_SMOOTHING) +
-                    target_value * self.STEERING_SMOOTHING)
-
+        if self.STEERING_SMOOTHING == 0.0:
+            smoothed = target_value
+        else: # SMOOTH TRANSITION
+            smoothed = int(self.previous_steering_value * (1 - self.STEERING_SMOOTHING) +
+                        target_value * self.STEERING_SMOOTHING)
+            
         self.previous_steering_value = smoothed
         return smoothed
 
