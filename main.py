@@ -55,8 +55,7 @@ vjoy_controller = VJoyController(
     vjoy_device,
     sensitivity=STEERING_SENSITIVITY,
     deadzone=STEERING_DEADZONE,
-    max_rotation=MAX_WHEEL_ROTATION,
-    steering_steps=21
+    max_rotation=MAX_WHEEL_ROTATION
 )
 
 def display_shift_counter(counter):

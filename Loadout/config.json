@@ -1,6 +1,6 @@
 {
     "steering_sensitivity": 2.5,
-    "steering_deadzone": 2,
+    "steering_deadzone": 0,
     "max_wheel_rotation": 240,
     "gas_min": 0,
     "gas_max": 32767,
