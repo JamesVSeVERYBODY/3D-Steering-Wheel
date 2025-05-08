@@ -1,5 +1,5 @@
 {
-    "steering_sensitivity": 2.5,
+    "steering_sensitivity": 2.0,
     "steering_deadzone": 0,
     "max_wheel_rotation": 240,
     "gas_min": 0,
