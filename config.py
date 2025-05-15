@@ -7,8 +7,8 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")  # Path lengkap ke config.
 # ✅ Default Config
 default_config = {
     "steering_sensitivity": 1.0,
-    "steering_deadzone": 5,
-    "max_wheel_rotation": 450,
+    "steering_deadzone": 2,
+    "max_wheel_rotation": 240,
     "gas_min": 20000,
     "gas_max": 32767,
     "brake_min": 9000,

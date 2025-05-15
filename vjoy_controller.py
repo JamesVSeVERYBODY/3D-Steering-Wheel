@@ -1,4 +1,5 @@
 import pyvjoy
+import numpy as np
 
 class VJoyController:
     def __init__(self, vjoy_device, sensitivity=2.0, deadzone=2, max_rotation=240):
@@ -16,22 +17,32 @@ class VJoyController:
     def map_yaw_to_steering(self, yaw):
         yaw = round(yaw)
 
-        # Terapkan deadzone
+        # Deadzone (kecilkan kalau perlu)
         if abs(yaw) < self.STEERING_DEADZONE:
             yaw = 0.0
 
-        # Clamp yaw
-        yaw = max(-180, min(180, yaw))
+        # Clamp yaw ke limit stir fisik
+        max_yaw = self.MAX_WHEEL_ROTATION / 2  # Misal 240° → max_yaw = 120°
+        yaw = max(-max_yaw, min(max_yaw, yaw))
 
         # Sensitivity boost
         yaw *= self.STEERING_SENSITIVITY
 
-        # Mapping analog yaw langsung ke vJoy value
+        # Clamp lagi biar ga lewat
+        yaw = max(-max_yaw, min(max_yaw, yaw))
+
+        # Non-linear scaling biar yaw kecil lebih terasa
+        yaw_sign = np.sign(yaw)
+        yaw_abs = abs(yaw) / max_yaw  # Normalisasi ke 0-1
+        yaw_scaled = yaw_abs ** 0.7   # Exponent < 1 → yaw kecil lebih agresif
+        yaw = yaw_sign * yaw_scaled * max_yaw  # Kembalikan ke derajat aslinya
+
+        # Mapping yaw ke vJoy axis (0 - 32767)
         center_value = 16384
         max_range = 16384
-        target_value = center_value + int((yaw / 180.0) * max_range)
+        target_value = center_value + int((yaw / max_yaw) * max_range)
 
-        # Optional smoothing
+        # Smoothing kalau diaktifkan
         if self.STEERING_SMOOTHING == 0.0:
             return target_value
         else:
