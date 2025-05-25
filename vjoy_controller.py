@@ -55,6 +55,7 @@ class VJoyController:
         if yaw is not None:
             steering_value = self.map_yaw_to_steering(yaw)
             self.vjoy_device.set_axis(self.STEERING_AXIS, steering_value)
+            self.previous_steering_value = steering_value
 
         self.vjoy_device.set_axis(self.THROTTLE_AXIS, throttle)
         self.vjoy_device.set_axis(self.BRAKE_AXIS, brake)

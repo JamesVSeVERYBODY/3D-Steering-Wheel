@@ -61,6 +61,13 @@ vjoy_controller = VJoyController(
 def display_shift_counter(counter):
     return "R" if counter == 0 else str(counter)
 
+steering_log = []
+throttle_log = []
+brake_log = []
+latency_steer_log = []
+latency_throttle_log = []
+latency_brake_log = []
+
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
@@ -84,6 +91,9 @@ while cap.isOpened():
 
     # ===== BAGIAN DETEKSI TANGAN =====
     hand_results = hand_detector.process_frame(gesture_frame)
+    start_latency_steer = time.perf_counter()
+
+    aruco_result = aruco_detector.detect_markers(aruco_frame)
     
     if hand_results.multi_hand_landmarks:
         for hand_landmarks, hand_type in zip(hand_results.multi_hand_landmarks, hand_results.multi_handedness):
@@ -136,6 +146,7 @@ while cap.isOpened():
 
             # Throttle & brake
             if hand_label == "Right":
+                start_latency_throttle = time.perf_counter()                
                 if not hand_detector.is_index_finger_vertical(hand_landmarks):  # Jangan throttle pas shift gesture
                     throttle_value_raw, _ = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
 
@@ -149,8 +160,12 @@ while cap.isOpened():
                 else:
                     throttle_value = 0
                     is_throttle = False
-
+                # Setelah set_axis throttle:
+                latency_throttle = (time.perf_counter() - start_latency_throttle) * 1000
+                latency_throttle_log.append((time.time(), latency_throttle))
+            
             elif hand_label == "Left":
+                start_latency_brake = time.perf_counter()
                 _, brake_value_raw = hand_detector.get_throttle_brake_value(hand_landmarks, hand_label)
 
                 if brake_value_raw < 9500:  # bisa disesuaikan juga
@@ -159,6 +174,8 @@ while cap.isOpened():
                 else:
                     brake_value = brake_value_raw
                     is_braking = True
+                latency_brake = (time.perf_counter() - start_latency_brake) * 1000
+                latency_brake_log.append((time.time(), latency_brake))
 
             # Tampilkan nilai throttle & brake di frame
             cv2.putText(frame, f"Throttle: {throttle_value}", (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
@@ -175,6 +192,7 @@ while cap.isOpened():
         if not left_hand_detected:
             brake_value = 0
             is_braking = False
+    
 
     # ===== BAGIAN DETEKSI ARUCO =====
     aruco_result = aruco_detector.detect_markers(aruco_frame)
@@ -229,6 +247,14 @@ while cap.isOpened():
             # Kirim data ke vJoy
             vjoy_controller.set_controls(yaw_value, throttle_value, brake_value, shift_up, shift_down)
             
+                # --- LATENCY STOP ---
+            latency_steer = (time.perf_counter() - start_latency_steer) * 1000
+            latency_steer_log.append((time.time(), latency_steer))
+
+            steering_log.append((time.time(), yaw_value, vjoy_controller.previous_steering_value))
+            throttle_log.append((time.time(), throttle_value))
+            brake_log.append((time.time(), brake_value))
+
             # Tampilkan informasi steering
             center_x = frame.shape[1] // 2
             center_y = frame.shape[0] - 50
@@ -302,5 +328,40 @@ while cap.isOpened():
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+import csv
+
+with open('steering_log.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['timestamp', 'yaw', 'vjoy_value'])
+    writer.writerows(steering_log)
+
+with open('throttle_log.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['timestamp', 'throttle_value'])
+    writer.writerows(throttle_log)
+
+with open('brake_log.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['timestamp', 'brake_value'])
+    writer.writerows(brake_log)
+
 cap.release()
 cv2.destroyAllWindows()
+
+# Steering Latency
+with open('latency_steer_log.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['timestamp', 'latency_ms'])
+    writer.writerows(latency_steer_log)
+
+# Throttle Latency
+with open('latency_throttle_log.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['timestamp', 'latency_ms'])
+    writer.writerows(latency_throttle_log)
+
+# Brake Latency
+with open('latency_brake_log.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['timestamp', 'latency_ms'])
+    writer.writerows(latency_brake_log)
