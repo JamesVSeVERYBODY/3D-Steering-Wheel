@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# User config
+Loadout/config.json
+Steering Controls/Loadout/config.json
+
+# VSCode/IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Log/plot hasil
+*.csv
+*.log
+
+# Jangan abaikan script utama dan modul
+!*.py 
